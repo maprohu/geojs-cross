@@ -1,19 +1,22 @@
 import java.util.jar.Attributes
 
+val geojsVersion = "0.1.0"
 val githubRepo = "geojs-cross"
 val osgiVersion = "5.0.0"
 
 lazy val commonSettings = Seq(
   organization := "com.github.maprohu",
-  version := "0.1.0-SNAPSHOT",
+  version := geojsVersion,
   publishMavenStyle := true,
   publishTo := {
     val nexus = "https://oss.sonatype.org/"
     if (isSnapshot.value)
       Some("snapshots" at nexus + "content/repositories/snapshots")
     else
-      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+      Some(sbtglobal.SbtGlobals.devops)
+//      Some("releases"  at nexus + "service/local/staging/deploy/maven2")
   },
+  credentials += sbtglobal.SbtGlobals.devopsCredentials,
   pomIncludeRepository := { _ => false },
   licenses := Seq("BSD-style" -> url("http://www.opensource.org/licenses/bsd-license.php")),
   homepage := Some(url(s"https://github.com/maprohu/${githubRepo}")),
@@ -31,7 +34,6 @@ lazy val commonSettings = Seq(
       </developers>
     ),
 
-  crossPaths := false,
   scalaVersion := "2.11.7"
 )
 
@@ -66,3 +68,12 @@ lazy val geojsCrossJS = geojsCross.js
 lazy val geojsCrossJVM = geojsCross.jvm
   .enablePlugins(SbtOsgi)
 
+lazy val root = (project in file("."))
+  .aggregate(
+    geojsCrossJS,
+    geojsCrossJVM
+  )
+  .settings(
+    publishArtifact := false,
+    publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo")))
+  )
